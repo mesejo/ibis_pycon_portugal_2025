@@ -1,0 +1,19 @@
+[project]
+name = "pycon-portugal-ibis"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "fastapi[standard]>=0.116.1",
+    "ibis-framework[duckdb]>=10.6.0",
+    "ipython>=9.4.0",
+    "jupyter>=1.1.1",
+    "jupyter-contrib-nbextensions>=0.7.0",
+    "marimo>=0.14.12",
+    "nbconvert>=7.16.6",
+    "palmerpenguins>=0.1.4",
+    "redis>=6.2.0",
+    "rise>=5.7.1",
+    "scikit-learn>=1.7.1",
+]
