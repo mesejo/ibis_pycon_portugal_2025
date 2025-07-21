@@ -175,3 +175,4 @@ Thank you for listening, and I'd be happy to take questions or discuss how you m
 ## {.center}
 
 <h5 class="r-fit-text">Thank You</h5>
+<h5 class="r-fit-text">https://github.com/mesejo/ibis_pycon_portugal_2025</h5>
