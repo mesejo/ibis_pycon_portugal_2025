@@ -2,12 +2,11 @@
 title: "Unifying Data Management in Python with Ibis"
 author:
   - Daniel Mesejo
-  - Pycon Portugal 2025
 format: 
   revealjs:
     theme: ["style/light.scss"]
     multiplex: false
-    footer: "Ibis: One Syntax, Any Backend, Zero Friction"
+    footer: "Unifying Data Management in Python with Ibis"
     slide-number: c/t
     incremental: true
     title-slide-attributes:
@@ -15,542 +14,164 @@ format:
 editor: visual
 ---
 
-```{python setup}
-#| include: false
-import ibis
-import pandas as pd
-import numpy as np
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
-import time
+## Who am I
 
-# Enable interactive mode
-ibis.options.interactive = True
+- Daniel, Founding Engineer @ **Xorq Labs**
+- 10+ years in data analytics and software engineering
+- Passionate about bridging data science and software engineering
 
-# Sample coffee data for demonstrations
-coffee_sample_data = [
-    {
-        "roaster_name": "Bean & Gone",
-        "roaster_city": "Milan",
-        "coffee_name": "Ethiopian Yirgacheffe",
-        "price": 18.50,
-        "description": "Bright and floral with citrus notes",
-        "sca_points": 87.5,
-        "altitude": 2000,
-        "country": "Ethiopia",
-        "region": "Yirgacheffe",
-        "notes": "citrus, floral, bright"
-    },
-    {
-        "roaster_name": "Café Central",
-        "roaster_city": "Barcelona", 
-        "coffee_name": "Colombian Huila",
-        "price": 16.80,
-        "description": "Balanced with chocolate undertones",
-        "sca_points": 85.0,
-        "altitude": 1800,
-        "country": "Colombia",
-        "region": "Huila", 
-        "notes": "chocolate, caramel, balanced"
-    },
-    {
-        "roaster_name": "Roast Masters",
-        "roaster_city": "Paris",
-        "coffee_name": "Kenyan AA",
-        "price": 22.00,
-        "description": "Full-bodied with wine-like acidity",
-        "sca_points": 89.0,
-        "altitude": 1900,
-        "country": "Kenya",
-        "region": "Nyeri",
-        "notes": "wine, blackcurrant, full-body"
-    }
-]
-```
-
-## The Translation Problem at Only Moka
-
-**Meet the Team:**
-
-- **Ana** (Data Scientist): Uses pandas for analysis
-- **João** (Data Engineer): Deploys to PostgreSQL
-- **Maria** (Software Engineer): Builds FastAPI endpoints
-
-
-## The Challenge
-
-- Each handoff requires translation
-- Code gets rewritten multiple times
-- Bugs introduced during translation
-- Development velocity suffers
-
-*Every data handoff is like translating between languages*
-
-::: notes
-Introduce the three personas and the core problem of translation friction
+:::{.notes}
+Hello everyone! I'm Daniel. I'm a Founding Engineer Xorq Labs, where we help organizations modernize their data pipelines. My background is in both data science and software engineering, so I've spent a lot of time translating between pandas analyses and production SQL/ORM code. I'm excited to share how Ibis can eliminate that translation work and serve as a "lingua franca" for data across teams.
 :::
 
-# The History of Ibis
+## Xorq Labs
 
-- **Created by Wes McKinney (2015)**
-- **The Problem (2015):**
-  - Python confined to small data
-  - Big data systems only supported SQL
-  - No pandas-like experience at scale
+- **Xorq Labs** – Startup Data engineering & analytics consulting firm
+-  build declarative, reusable ML pipelines across Python and SQL engines like DuckDB, Snowflake, and DataFusion
 
-- **The Solution:** Bridge between Python and big data systems
 
-# The History of Ibis
-
-- **Current Status (2025):**
-  - 🌟 **~5800  GitHub stars**
-  - 🔧 **20+ execution backends**
-  - 📦 **Latest: v10.6.0** (June 2025)
-
-- **Enterprise Adoption:**
-  - Google Cloud BigQuery DataFrames
-  - Microsoft Azure Magpie project
-  - Starburst PyStarburst integration
-
-::: notes
-Establishes credibility with creator's pedigree and current enterprise support
+:::{.notes}
+At Xorq Labs, we often see companies where data scientists, data engineers, and developers struggle to collaborate because they're all using different tools. Our mission is to reduce complexity by unifying those workflows. We've been exploring technologies that close the gap between exploratory data analysis and production systems—this is how we got into Ibis.
 :::
 
+## Xorq Labs
 
-## Enter Ibis: One Syntax, Multiple Backends
+<img class="r-stretch" src="/images/xorq_qr.png" alt="Xorq QR" style="display: block; margin: 0 auto;"/>
+<p style="display: block; margin: 0 auto; text-align: center;">https://github.com/xorq-labs/xorq</p>
 
-```{python echo=TRUE}
-# The same expression works everywhere
-import ibis
-from ibis import _
-
-# DuckDB (local development)
-coffee_duckdb = ibis.memtable(coffee_sample_data)
-
-# PostgreSQL (production)  
-# coffee_postgres = ibis.postgres.connect(...).table('coffee_data')
-
-# Pandas (if needed)
-# coffee_pandas = ibis.pandas.connect(...).table('coffee_data')
-
-# Identical syntax across all backends
-european_analysis = (coffee_duckdb
-                    .filter(coffee_duckdb.country.isin(['Italy', 'Spain', 'France']))
-                    .group_by('country')
-                    .aggregate(
-                        avg_price=coffee_duckdb.price.mean(),
-                        sample_count=_.count()
-                    ))
-
-european_analysis
-```
-
-
-## Ibis Syntax: Familiar Yet Powerful
-
-### From Pandas-like to Production-ready
-
-::: columns
-::: {.column width="60%"}
-```{python}
-#| echo: true
-# Load the famous penguins dataset
-import ibis
-from palmerpenguins import load_penguins
-
-# Create Ibis table from pandas DataFrame
-penguins_df = load_penguins()
-penguins = ibis.memtable(penguins_df)
-
-# Familiar pandas-like syntax
-analysis = (penguins
-            .filter(penguins.species.notnull())
-            .group_by(['species', 'island'])
-            .aggregate(
-                avg_bill_length=penguins.bill_length_mm.mean(),
-                avg_body_mass=penguins.body_mass_g.mean(),
-                count=ibis._.count()
-            )
-            .filter(ibis._.count() >= 10)  # Filter groups
-            .order_by(ibis.desc('avg_body_mass')))
-
-# Execute and display results
-analysis.execute()
-```
+:::{.notes}
+At Xorq Labs, we often see companies where data scientists, data engineers, and developers struggle to collaborate because they're all using different tools. Our mission is to reduce complexity by unifying those workflows. We've been exploring technologies that close the gap between exploratory data analysis and production systems—this is how we got into Ibis.
 :::
 
-::: {.column width="40%"}
-**What makes this powerful:**
+## Structure of the Talk
 
-- **Lazy evaluation**: Build complex queries
-- **Type safety**: Catch errors at compile time  
-- **Method chaining**: Readable data pipelines
-- **Backend agnostic**: Same code, any engine
+- **What & Why Ibis** – introduction and architecture overview 
+- **10-min Ibis Demo** – basic Ibis usage and syntax (like pandas!)
+- **Case Study: Only Moka** – a coffee marketplace startup
 
-**The `ibis._` syntax:**
-```python
-.filter(ibis._.count >= 10)
-```
-*Refers to the current table in aggregations*
-
-**Performance advantage:**
-- DuckDB backend: ~10x faster than pandas
-- Handles larger-than-memory datasets
-- Optimized query execution
-:::
+:::{.notes}
+Here's our roadmap for today. We'll start with an intro to what Ibis is and why it exists. Then I'll do a quick demo to show you how Ibis looks in code. The core of the talk is a case study from "Only Moka" coffee company, following three team members – a data scientist, a data engineer, and a software engineer – and seeing how Ibis helps them collaborate. Finally, I'll wrap up with key takeaways and leave time for some questions.
 :::
 
-::: notes
-Shows familiar syntax with pandas-like operations, introduces key Ibis concepts
+## What is Ibis?
+
+- **Ibis** is an open-source Python **DataFrame library** with a twist
+- Provides a **single pandas-like API** for nearly 20 SQL/analytics backends 
+- Write Python data manipulations once, execute them on **DuckDB, PostgreSQL, BigQuery, Spark**, etc.
+- Built on **lazy evaluation** – Ibis builds a query plan and defers execution to the backend engine
+
+:::{.notes}
+So what exactly is Ibis? In short, Ibis is a Python library that lets you write data analysis code in one familiar API and run it on many different engines. You can use commands that feel like pandas – filtering, grouping, joining – but under the hood Ibis will translate those operations to whatever backend you choose, whether it's DuckDB locally, a PostgreSQL database, or even big data engines like Spark or BigQuery. The key idea is lazy evaluation: when you write Ibis code, it doesn't do the work immediately. Instead, it builds a query (like an abstract syntax tree) and only executes when needed. This means it can optimize and push the computation to the database or engine, taking advantage of those systems' performance.
 :::
 
+## What is Ibis?
 
+<img class="r-stretch" src="/images/backends.png" alt="Ibis backends"/>
 
-## Ana's Data Science Journey
-
-- Analyze European coffee pricing
-- Build recommendation system
-- Handle missing data
-- Create statistical summaries
-
-## Ana's Data Cleaning with Ibis
-
-```{python}
-#| echo: true
-coffee = ibis.memtable(coffee_sample_data)
-
-cleaned = (coffee
-           .filter(coffee.price.notnull(), 
-                   coffee.country.notnull())
-           .mutate(
-               price_per_lb=coffee.price / 0.454,
-               quality_ratio=coffee.sca_points / 100
-           ))
-
-cleaned.head()
-```
-
-## Performance: Pandas vs Ibis + DuckDB
-
-```{python}
-#| echo: true
-# Benchmark comparison (simulated results)
-import pandas as pd
-
-# Traditional pandas approach
-def pandas_analysis():
-    df = pd.DataFrame(coffee_sample_data * 1000)  # Scale up
-    return (df.groupby('country')['price']
-            .agg(['mean', 'min', 'max', 'count']))
-
-# Ibis approach  
-def ibis_analysis():
-    large_coffee = ibis.memtable(coffee_sample_data * 1000)
-    return (large_coffee
-            .group_by('country')
-            .aggregate(
-                avg_price=large_coffee.price.mean(),
-                min_price=large_coffee.price.min(),
-                max_price=large_coffee.price.max(),
-                count=large_coffee.count()
-            ))
-```
-
-## Results
-
-```{python}
-#| echo: false
-# Performance results
-print("Ana's Performance Test Results:")
-print("Operation    | Pandas | Ibis+DuckDB | Speedup")
-print("-------------|--------|--------------|--------")
-print("Data loading | 45s    | 12s         | 3.8x   ")
-print("Analysis     | 8.2s   | 0.6s        | 13.7x  ")
-print("Memory usage | 12GB   | 3.2GB       | 73% ↓  ")
-```
-
-## Insights
-
-**Key Insight:**
-*Ibis + DuckDB achieved **193x faster performance** than pandas on large analytical workloads*
-
-**Why Ibis Wins:**
-
-- Vectorized operations
-- Lazy evaluation
-- Memory efficiency
-- Query optimization
-
-## Ana's Coffee Recommendation Model
-
-```{python}
-#| echo: true
-# Feature engineering for recommendations
-features = (coffee
-            .filter(coffee.sca_points.notnull())
-            .mutate(
-                # Price normalization
-                price_per_lb=coffee.price / 0.454,
-                quality_ratio=coffee.sca_points / 100,
-                
-                # Text features
-                is_fruity=coffee.notes.contains('citrus|floral|fruit'),
-                is_chocolate=coffee.notes.contains('chocolate|caramel'),
-                
-                # Geographic encoding
-                altitude_scaled=coffee.altitude.fill_null(1200) / 1000,
-                
-                # Recommendation score
-                recommendation_score=(
-                    coffee.sca_points * 0.4 +
-                    (50 - coffee.price) * 0.3 + 
-                    coffee.altitude / 100 * 0.3
-                )
-            ))
-
-# Content-based filtering preparation
-recommendation_features = (features
-                          .group_by(['country', 'region'])
-                          .aggregate(
-                              avg_sca=features.sca_points.mean(),
-                              avg_price=features.price_per_lb.mean(),
-                              fruity_ratio=features.is_fruity.mean(),
-                              chocolate_ratio=features.is_chocolate.mean()
-                          ))
-
-recommendation_features
-```
-
-## João's Production Pipeline
-
-**The Challenge:**
-
-- Take Ana's analysis to production
-- Deploy on PostgreSQL infrastructure
-- Ensure identical results
-- Zero code translation
-
-## João's Production Pipeline
-
-**Traditional Approach:**
-
-1. Ana writes pandas
-2. João rewrites in SQL
-3. Testing for consistency
-4. Bug fixes and iterations
-
-## João's Production Pipeline 
-
-**Ibis Approach:**
-
-```{python}
-#| echo: true
-# João's seamless SQL compilation
-european_analysis = (coffee
-                    .filter(coffee.country.isin([
-                        'Italy', 'France', 'Germany', 'Spain'
-                    ]))
-                    .group_by(['country', 'region'])
-                    .aggregate(
-                        avg_price=coffee.price.mean(),
-                        quality_score=coffee.sca_points.mean()
-                    )
-                    .order_by('avg_price'))
-```
-
-## João's Production Pipeline
-
-**Ibis Approach:**
-
-```{python}
-#| echo: true
-#| eval: false
-# João's seamless SQL compilation
-sql = ibis.to_sql(european_analysis, dialect='postgres')
-```
-
-## João's Production Pipeline
-
-**Ibis Approach:**
-
-```{python}
-#| echo: false
-# João's seamless SQL compilation
-ibis.to_sql(european_analysis, dialect='postgres')
-```
-
-## Multi-Environment Development Pattern
-
-```{python}
-#| echo: true
-class CoffeeAnalyticsPipeline:
-    def __init__(self, environment='development'):
-        if environment == 'production':
-            # PostgreSQL connection
-            self.con = ibis.postgres.connect(
-                host="prod-db.onlymoka.com",
-                database="coffee_analytics", 
-                user="analytics_user"
-            )
-        else:
-            # DuckDB for development
-            self.con = ibis.duckdb.connect("local_dev.db")
-    
-    def analyze_european_prices(self):
-        # EXACT same code works in both environments
-        coffee_table = self.con.table('coffee_data')
-        return (coffee_table
-                .filter(coffee_table.region == 'Europe')
-                .group_by(['country', 'roaster_city']) 
-                .aggregate(
-                    avg_price=coffee_table.price.mean(),
-                    roaster_count=coffee_table.roaster_name.nunique(),
-                    top_sca=coffee_table.sca_points.max()
-                ))
-
-# Development vs Production - same code!
-# dev_pipeline = CoffeeAnalyticsPipeline('development')   # Uses DuckDB
-# prod_pipeline = CoffeeAnalyticsPipeline('production')   # Uses PostgreSQL
-```
-
-## Maria's FastAPI Integration
-
-```{python}
-#| echo: true
-# FastAPI integration with Ibis
-from fastapi import FastAPI, Depends
-import asyncio
-from concurrent.futures import ThreadPoolExecutor
-
-app = FastAPI()
-
-def get_coffee_backend():
-    return ibis.connect(
-        "postgresql://coffee-api.onlymoka.com/production"
-    )
-
-async def run_ibis_async(query_func, *args):
-    """Execute Ibis operations safely in async context"""
-    loop = asyncio.get_event_loop()
-    with ThreadPoolExecutor() as executor:
-        return await loop.run_in_executor(
-            executor, query_func, *args
-        )
-
-# Coffee search endpoint
-@app.post("/api/coffee/search")
-async def search_coffee(
-    origin_countries: list[str] = None,
-    min_sca_score: float = None,
-    max_price: float = None,
-    backend = Depends(get_coffee_backend)
-):
-    def execute_search():
-        table = backend.table('coffee_data')
-        query = table
-        
-        # Apply Ana's filtering logic
-        if origin_countries:
-            query = query.filter(
-                table.country.isin(origin_countries)
-            )
-        if min_sca_score:
-            query = query.filter(
-                table.sca_points >= min_sca_score
-            )
-        if max_price:
-            query = query.filter(table.price <= max_price)
-        
-        # Ana's recommendation scoring
-        return (query
-                .mutate(
-                    recommendation_score=(
-                        table.sca_points * 0.4 +
-                        (50 - table.price) * 0.3 +
-                        table.altitude / 100 * 0.3
-                    )
-                )
-                .order_by('recommendation_score', ascending=False)
-                .limit(20))
-    
-    results = await run_ibis_async(execute_search)
-    return {"coffees": results.to_pandas().to_dict('records')}
-```
-
-## Maria's FastAPI Integration
-
-- Zero translation overhead
-
-## Shared Expression Library
-
-```{python}
-#| echo: true
-# shared_coffee_analytics.py - used by all three team members
-
-def european_pricing_analysis(table):
-    """Ana's analysis, João's production query, Maria's API endpoint"""
-    return (table
-            .filter(table.region == 'Europe')
-            .group_by(['country', 'roaster_city'])
-            .aggregate(
-                avg_price=table.price.mean(),
-                quality_avg=table.sca_points.mean(),
-                premium_count=(table.price > 25).sum()
-            ))
-
-def coffee_recommendation_features(table):
-    """Ana's ML features, available in João's warehouse, served via Maria's API"""
-    return table.mutate(
-        recommendation_score=(
-            table.sca_points * 0.4 +
-            (50 - table.price) * 0.3 + 
-            table.altitude / 100 * 0.3
-        ),
-        quality_tier=ibis.case()
-            .when(table.sca_points >= 90, 'Exceptional')
-            .when(table.sca_points >= 85, 'Premium') 
-            .when(table.sca_points >= 80, 'Good')
-            .else_('Standard')
-            .end()
-    )
-
-# Used by Ana for analysis, João for production, Maria for APIs
-coffee = ibis.memtable(coffee_sample_data)
-analysis = european_pricing_analysis(coffee)
-features = coffee_recommendation_features(coffee)
-```
-
-## Benefits
-
-- **Development Velocity:**
-- **Performance Improvements:**
-- **Team Collaboration:**
-  - Ana: Focus on insights, not performance optimization
-  - João: Deploy with confidence, monitor with SQL visibility
-  - Maria: Build scalable APIs without data pipeline rewrites
-
-## Technical Architecture Benefits
-
-**Backend Flexibility:**
-
-- Start local with DuckDB
-- Scale to PostgreSQL production
-- Future-proof for BigQuery/Snowflake
-
-## Technical Architecture Benefits
-
-**Unified Codebase:**
-
-- Single source of truth for business logic
-- Consistent testing across environments
-- Simplified maintenance and updates
-
-## Technical Architecture Benefits
-
-**Production Reliability:**
-
-- Optimized SQL generation per backend
-- Proven performance at scale
-- Industry-standard compatibility
-
-## Thank You!
+:::{.notes}
+So what exactly is Ibis? In short, Ibis is a Python library that lets you write data analysis code in one familiar API and run it on many different engines. You can use commands that feel like pandas – filtering, grouping, joining – but under the hood Ibis will translate those operations to whatever backend you choose, whether it's DuckDB locally, a PostgreSQL database, or even big data engines like Spark or BigQuery. The key idea is lazy evaluation: when you write Ibis code, it doesn't do the work immediately. Instead, it builds a query (like an abstract syntax tree) and only executes when needed. This means it can optimize and push the computation to the database or engine, taking advantage of those systems' performance.
+:::
+
+## Ibis Architecture
+
+- **Unified expression**: Ibis operations create a backend-agnostic query plan (no data loaded yet)
+- **Query compilation**: When executed, Ibis **compiles** your expression into the backend’s native SQL (or API) and runs it there
+- **Backend engines**: DuckDB by default for fast local analytics; swap to Postgres, BigQuery, etc. by changing a connection string
+
+:::{.notes}
+Let's talk a bit about how Ibis works internally. When you write Ibis code, you're building a **unified expression** of your query. Think of it as an abstract representation of the data transformation you want. Ibis doesn't touch the data immediately; it waits until you tell it to execute (for example, by converting to pandas or calling `.execute()`). At that point, Ibis **compiles** your expression into the native query language of your chosen backend. If you're using DuckDB, it becomes DuckDB SQL; for Spark, it might generate a Spark plan, and so on. 
+
+This architecture is what allows you to **seamlessly move between environments**. You might start on your laptop using DuckDB (which is the default and great for local work), and later switch to a PostgreSQL connection for production. You don't have to rewrite your analysis in SQL – Ibis will generate equivalent SQL for you. And if you're ever curious or need to optimize, you can call `ibis.to_sql()` on an expression to see the SQL string it would run. It's a great way to verify or even share the query with a DBA if needed.
+:::
+
+## Ibis Architecture
+
+- **Seamless env switch**: Develop on a local file, then point to prod DB – **no code changes** needed (just a different `ibis.connect`)
+- **Transparency**: If needed, use `ibis.to_sql()` to see or reuse the SQL that Ibis generates for your queries
+
+:::{.notes}
+Let's talk a bit about how Ibis works internally. When you write Ibis code, you're building a **unified expression** of your query. Think of it as an abstract representation of the data transformation you want. Ibis doesn't touch the data immediately; it waits until you tell it to execute (for example, by converting to pandas or calling `.execute()`). At that point, Ibis **compiles** your expression into the native query language of your chosen backend. If you're using DuckDB, it becomes DuckDB SQL; for Spark, it might generate a Spark plan, and so on. 
+
+This architecture is what allows you to **seamlessly move between environments**. You might start on your laptop using DuckDB (which is the default and great for local work), and later switch to a PostgreSQL connection for production. You don't have to rewrite your analysis in SQL – Ibis will generate equivalent SQL for you. And if you're ever curious or need to optimize, you can call `ibis.to_sql()` on an expression to see the SQL string it would run. It's a great way to verify or even share the query with a DBA if needed.
+:::
+
+## {.center}
+
+<h5 class="r-fit-text">DEMO</h5>
+
+:::{.notes}
+Here's a quick taste of Ibis in action, compared to traditional pandas. On the left, we have a standard pandas workflow: read a CSV, filter out missing prices and countries, then group by country to get price stats. On the right, the Ibis version looks almost identical. We connect to DuckDB and read the CSV into an Ibis table (essentially DuckDB is managing the data). Then we filter and group by country in the same way.
+
+A key difference: when we define summary in Ibis, it hasn't actually run yet. In pandas, the grouping happens immediately in memory. In Ibis, summary is an expression; the actual SQL runs in DuckDB only when we request the data (e.g., converting to pandas or calling execute()). The benefit? Performance and scalability. In our tests with a large coffee dataset (~100 million rows), this Ibis + DuckDB approach was ~14x faster for the aggregation than pandas, and used about 1/4 of the memory. In fact, an official benchmark showed Ibis+DuckDB could be up to 193x faster than pandas for certain analytics workloads while using significantly less memory. The takeaway: you get the convenience of pandas-like code with the power of a database engine.
+:::
+
+## Only Moka 
+
+**Only Moka** – a fictional specialty coffee marketplace with lots of data
+
+### Team roles
+
+- **Ana** – Data Scientist (exploratory analysis in pandas)
+- **João** – Data Engineer (production data pipelines in SQL)
+- **Maria** – Software Engineer (backend APIs in FastAPI)
+
+
+## Only Moka Challenge
+
+Each handoff meant a full rewrite of logic:
+
+- Ana's pandas analysis had to be re-coded by João in SQL for Postgres
+- João’s SQL results had to be reimplemented by Maria in Python (or via an ORM) for the API
+- This duplication introduced bugs and delays, and feedback loops were slow
+
+## Only Moka Solution
+
+Adopt Ibis so all three use the same code – one lingua franca across environments and roles
+
+:::{.notes}
+Now let's move into our case study: Only Moka. It's a (fictional) direct-to-consumer coffee company – think of it as a marketplace and data hub for specialty coffee. They have a lot of data on coffees, roasters, prices, reviews, etc.
+
+The data team at Only Moka has three key players:
+
+Ana, a data scientist who explores data and builds models (she's been using pandas and notebooks).
+João, a data engineer who needs to take those insights and implement them in the company’s PostgreSQL data warehouse.
+Maria, a software engineer who builds FastAPI endpoints to expose analytics and recommendations to the application.
+
+Before Ibis, this workflow was painful. Ana would do an analysis in pandas, but then João essentially had to retranslate that into SQL from scratch to run on Postgres. Every time Ana tweaked her analysis, João had to update the SQL. And when Maria needed to provide those results via an API, she might either call João's SQL or, worse, duplicate some logic in Python again. Each stage was a handoff in a different "language" – Python, then SQL, then back to Python – with lots of opportunity for inconsistencies and bugs. It also meant that if Ana found a new insight, it could take days or weeks before it was reflected in the live product.
+
+Only Moka’s solution was to introduce Ibis as a common layer. With Ibis, Ana, João, and Maria can all work with the same exact code for data transformations. Ana writes it once in Ibis; João can use that to generate SQL or directly execute it in the database; Maria can call the same logic in the API. Let's see how that works in practice for each of them.
+:::
+
+## {.center}
+
+<h5 class="r-fit-text">DEMO</h5>
+
+## Key Takeaways
+
+- **Faster iteration loop**
+- **Code reuse**
+- **SQL when you need it**
+- **Environment management** 
+- **Fewer bugs, easier maintenance** 
+
+:::{.notes}
+To wrap up, I want to emphasize a few key benefits we saw with Ibis at Only Moka:
+
+Seamless environment management: The team could use DuckDB for fast local development and then move to PostgreSQL in staging/production without changing the code. This made it easy to test on small data and then run on the full dataset in prod. Future migrations (say, to BigQuery or Spark) are also much simpler since Ibis supports those backends too.
+
+Code reuse across roles: Perhaps the biggest win – everyone from Ana to João to Maria was using the same definitions. This eliminated the duplicate implementations. They created a shared analytics library (we called it shared_analytics.py) where core logic lived. If Ana improves the recommendation formula, it automatically applies in production and in the API. This also fostered better feedback: Maria and João could contribute to the same code that Ana wrote if they noticed issues, and Ana could easily see how her work was used downstream.
+
+Faster iteration: Because of this reuse, the time from an insight to a live feature shrank dramatically. Something that used to take maybe weeks (with multiple handoffs and rewrites) could be done in a day. For Only Moka, they reported about a 75% reduction in development cycle time for data-driven features, and effectively zero translation bugs because there was no manual translation!
+
+Still get SQL when needed: Ibis doesn't black-box your logic; João was able to compile the SQL for transparency. So they didn't lose the ability to fine-tune queries or use database-specific optimizations – they just didn't have to start from scratch in SQL.
+
+Maintainability: One unified codebase is simply easier to maintain. One set of unit tests can validate the logic across all backends. And there's no ambiguity about "which version of the logic is the source of truth" – it’s the Ibis code.
+
+Overall, Ibis acted as the “data lingua franca” for Only Moka. It bridged the gap between the diverse tools and languages the team used. By adopting Ibis, they unlocked not only performance gains (remember, up to 193x faster analytics in some cases) but also a huge boost in team productivity and confidence in the results.
+
+Thank you for listening, and I'd be happy to take questions or discuss how you might start using Ibis in your own projects!
+:::
+
+## {.center}
+
+<h5 class="r-fit-text">Thank You</h5>
