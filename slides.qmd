@@ -24,11 +24,9 @@ editor: visual
 Hello everyone! I'm Daniel. I'm a Founding Engineer Xorq Labs, where we help organizations modernize their data pipelines. My background is in both data science and software engineering, so I've spent a lot of time translating between pandas analyses and production SQL/ORM code. I'm excited to share how Ibis can eliminate that translation work and serve as a "lingua franca" for data across teams.
 :::
 
-## Xorq Labs
+## {.center}
 
-- **Xorq Labs** – Startup Data engineering & analytics consulting firm
--  build declarative, reusable ML pipelines across Python and SQL engines like DuckDB, Snowflake, and DataFusion
-
+<img class="r-stretch" src="/images/Xorq_WordMark.png" alt="Xorq Labs" style="display: block; margin: 0 auto;"/>
 
 :::{.notes}
 At Xorq Labs, we often see companies where data scientists, data engineers, and developers struggle to collaborate because they're all using different tools. Our mission is to reduce complexity by unifying those workflows. We've been exploring technologies that close the gap between exploratory data analysis and production systems—this is how we got into Ibis.
@@ -55,7 +53,7 @@ Here's our roadmap for today. We'll start with an intro to what Ibis is and why 
 
 ## What is Ibis?
 
-- **Ibis** is an open-source Python **DataFrame library** with a twist
+- **Ibis** is the Portable Python **DataFrame library**
 - Provides a **single pandas-like API** for nearly 20 SQL/analytics backends 
 - Write Python data manipulations once, execute them on **DuckDB, PostgreSQL, BigQuery, Spark**, etc.
 - Built on **lazy evaluation** – Ibis builds a query plan and defers execution to the backend engine

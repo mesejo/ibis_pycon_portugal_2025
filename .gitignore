@@ -14,3 +14,6 @@ slides_files/
 .ipynb_checkpoints/
 .idea/
 
+# Output Files
+slides.html
+
