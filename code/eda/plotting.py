@@ -27,8 +27,8 @@ app.layout = html.Div([
     Output('dot-plot', 'figure'),
     Input('origins-filter', 'value')
 )
-def update_plot(selected_species):
-    filter_table = coffees.filter(coffees.origin_region.isin(selected_species))
+def update_plot(regions):
+    filter_table = coffees.filter(coffees.origin_region.isin(regions))
     return px.scatter(
         filter_table.to_pandas(),
         x='sca_points',
