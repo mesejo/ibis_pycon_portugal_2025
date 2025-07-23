@@ -41,7 +41,6 @@ def read_coffee(coffee_id: int, con: ConnectionDep):
     coffee_tasting_note = con.table("coffee_tasting_note")
     tasting_note = con.table("tasting_note")
 
-    # 2.  Build the query
     expr = (
         coffee.join(roaster, ["roaster_id"])
         .join(coffee_tasting_note, ["coffee_id"])
