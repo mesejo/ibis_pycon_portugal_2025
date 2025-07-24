@@ -13,7 +13,11 @@ from eda.recommendation import relevance, similarity
 def from_env() -> SQLBackend:
     return ibis.sqlite.connect(Path(__file__).parents[1].joinpath("data", "coffees.db"))
 
+def fetch_all(expr: ibis.Table, limit=None) -> list:
+    return expr.to_pandas(limit=limit).to_dict(orient="records")
 
+def fetch_one(expr: ibis.Table) -> dict:
+    return fetch_all(expr, limit=1)[0]
 app = FastAPI()
 
 ConnectionDep = Annotated[SQLBackend, Depends(from_env)]
@@ -34,8 +38,7 @@ def read_coffees(con: ConnectionDep, region: list[str] = Query(default=[])):
     if region:
         coffees = coffees.filter(_.origin_region.isin(region))
 
-    return coffees.to_pandas().to_dict(orient="records")
-
+    return fetch_all(coffees)
 
 @app.get("/coffees/{coffee_id}")
 def read_coffee(coffee_id: int, con: ConnectionDep):
@@ -54,8 +57,7 @@ def read_coffee(coffee_id: int, con: ConnectionDep):
         .select(_.roaster_name, _.title, _.flavour_profile)
     )
 
-    return expr.to_pandas(limit=1).to_dict(orient="records")[0]
-
+    return fetch_one(expr)
 
 @app.get("/coffees/{coffee_id}/recommended")
 def read_coffee_recommendations(coffee_id: int, con: ConnectionDep):
@@ -114,7 +116,7 @@ def read_coffee_recommendations(coffee_id: int, con: ConnectionDep):
         .order_by(ibis._.score.desc(), ibis._.relevance.desc())
     )
 
-    return expr.to_pandas(limit=5).to_dict(orient="records")
+    return fetch_all(expr, limit=5)
 
 
 if __name__ == "__main__":

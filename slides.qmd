@@ -17,35 +17,35 @@ editor: visual
 ## Who am I
 
 - Daniel, Founding Engineer @ **Xorq Labs**
-- 10+ years in data analytics and software engineering
-- Passionate about bridging data science and software engineering
+- Software engineer with a knack for Machine Learning and Data Analytics
+- I enjoy sharing knowledge, used to hang on StackOverflow
+- Open-Source contributor (ibis, dask, xarray, geopandas, datafusion-python)
+- Python Barcelona Organizer
+- Curious fact: I lived in Brazil for 5 years
 
-:::{.notes}
-Hello everyone! I'm Daniel. I'm a Founding Engineer Xorq Labs, where we help organizations modernize their data pipelines. My background is in both data science and software engineering, so I've spent a lot of time translating between pandas analyses and production SQL/ORM code. I'm excited to share how Ibis can eliminate that translation work and serve as a "lingua franca" for data across teams.
-:::
 
 ## {.center}
 
 <img class="r-stretch" src="/images/Xorq_WordMark.png" alt="Xorq Labs" style="display: block; margin: 0 auto;"/>
 
 :::{.notes}
-At Xorq Labs, we often see companies where data scientists, data engineers, and developers struggle to collaborate because they're all using different tools. Our mission is to reduce complexity by unifying those workflows. We've been exploring technologies that close the gap between exploratory data analysis and production systems—this is how we got into Ibis.
+At Xorq Labs, we are trying to define an open compute format for AI
 :::
 
 ## Xorq Labs
 
 <img class="r-stretch" src="/images/xorq_qr.png" alt="Xorq QR" style="display: block; margin: 0 auto;"/>
-<p style="display: block; margin: 0 auto; text-align: center;">https://github.com/xorq-labs/xorq</p>
+<p style="display: block; margin: 0 auto; text-align: center;">&#11088; https://github.com/xorq-labs/xorq &#11088;</p> 
 
 :::{.notes}
-At Xorq Labs, we often see companies where data scientists, data engineers, and developers struggle to collaborate because they're all using different tools. Our mission is to reduce complexity by unifying those workflows. We've been exploring technologies that close the gap between exploratory data analysis and production systems—this is how we got into Ibis.
+We have created Xorq a library that takes major inspiration from Ibis, here is a link to the repo, if you could go and give a star if helps pay the bills. Enough with the AD and into the talk.
 :::
 
 ## Structure of the Talk
 
 - **What & Why Ibis** – introduction and architecture overview 
 - **10-min Ibis Demo** – basic Ibis usage and syntax (like pandas!)
-- **Case Study: Only Moka** – a coffee marketplace startup
+- **Case Study: Only Moka** – a fictional coffee marketplace startup
 
 :::{.notes}
 Here's our roadmap for today. We'll start with an intro to what Ibis is and why it exists. Then I'll do a quick demo to show you how Ibis looks in code. The core of the talk is a case study from "Only Moka" coffee company, following three team members – a data scientist, a data engineer, and a software engineer – and seeing how Ibis helps them collaborate. Finally, I'll wrap up with key takeaways and leave time for some questions.
@@ -54,7 +54,7 @@ Here's our roadmap for today. We'll start with an intro to what Ibis is and why 
 ## What is Ibis?
 
 - **Ibis** is the Portable Python **DataFrame library**
-- Provides a **single pandas-like API** for nearly 20 SQL/analytics backends 
+- Provides a **single pandas-like interface** for nearly 20 SQL/analytics backends 
 - Write Python data manipulations once, execute them on **DuckDB, PostgreSQL, BigQuery, Spark**, etc.
 - Built on **lazy evaluation** – Ibis builds a query plan and defers execution to the backend engine
 
@@ -67,7 +67,8 @@ So what exactly is Ibis? In short, Ibis is a Python library that lets you write 
 <img class="r-stretch" src="/images/backends.png" alt="Ibis backends"/>
 
 :::{.notes}
-So what exactly is Ibis? In short, Ibis is a Python library that lets you write data analysis code in one familiar API and run it on many different engines. You can use commands that feel like pandas – filtering, grouping, joining – but under the hood Ibis will translate those operations to whatever backend you choose, whether it's DuckDB locally, a PostgreSQL database, or even big data engines like Spark or BigQuery. The key idea is lazy evaluation: when you write Ibis code, it doesn't do the work immediately. Instead, it builds a query (like an abstract syntax tree) and only executes when needed. This means it can optimize and push the computation to the database or engine, taking advantage of those systems' performance.
+This is a plot of the many backends Ibis wraps, for the SQL backends it uses SQLGlot and for polars it uses direct Python translation, it used to support pandas, but it was 
+deprecated in version 10
 :::
 
 ## Ibis Architecture
@@ -79,7 +80,7 @@ So what exactly is Ibis? In short, Ibis is a Python library that lets you write 
 :::{.notes}
 Let's talk a bit about how Ibis works internally. When you write Ibis code, you're building a **unified expression** of your query. Think of it as an abstract representation of the data transformation you want. Ibis doesn't touch the data immediately; it waits until you tell it to execute (for example, by converting to pandas or calling `.execute()`). At that point, Ibis **compiles** your expression into the native query language of your chosen backend. If you're using DuckDB, it becomes DuckDB SQL; for Spark, it might generate a Spark plan, and so on. 
 
-This architecture is what allows you to **seamlessly move between environments**. You might start on your laptop using DuckDB (which is the default and great for local work), and later switch to a PostgreSQL connection for production. You don't have to rewrite your analysis in SQL – Ibis will generate equivalent SQL for you. And if you're ever curious or need to optimize, you can call `ibis.to_sql()` on an expression to see the SQL string it would run. It's a great way to verify or even share the query with a DBA if needed.
+This architecture is what allows you to **seamlessly move between environments**. You might start on your laptop using DuckDB (which is the default and great for local work), and later switch to a PostgreSQL connection for production. You don't have to rewrite your analysis in SQL – Ibis will generate equivalent SQL for you. And if you're ever curious or need to optimize, you can call `ibis.to_sql()` on an expression to see the SQL string it would run. It's a great way to verify or even share the query with a data engineer as we will see later.
 :::
 
 ## Ibis Architecture
@@ -88,20 +89,12 @@ This architecture is what allows you to **seamlessly move between environments**
 - **Transparency**: If needed, use `ibis.to_sql()` to see or reuse the SQL that Ibis generates for your queries
 
 :::{.notes}
-Let's talk a bit about how Ibis works internally. When you write Ibis code, you're building a **unified expression** of your query. Think of it as an abstract representation of the data transformation you want. Ibis doesn't touch the data immediately; it waits until you tell it to execute (for example, by converting to pandas or calling `.execute()`). At that point, Ibis **compiles** your expression into the native query language of your chosen backend. If you're using DuckDB, it becomes DuckDB SQL; for Spark, it might generate a Spark plan, and so on. 
-
 This architecture is what allows you to **seamlessly move between environments**. You might start on your laptop using DuckDB (which is the default and great for local work), and later switch to a PostgreSQL connection for production. You don't have to rewrite your analysis in SQL – Ibis will generate equivalent SQL for you. And if you're ever curious or need to optimize, you can call `ibis.to_sql()` on an expression to see the SQL string it would run. It's a great way to verify or even share the query with a DBA if needed.
 :::
 
 ## {.center}
 
 <h5 class="r-fit-text">DEMO</h5>
-
-:::{.notes}
-Here's a quick taste of Ibis in action, compared to traditional pandas. On the left, we have a standard pandas workflow: read a CSV, filter out missing prices and countries, then group by country to get price stats. On the right, the Ibis version looks almost identical. We connect to DuckDB and read the CSV into an Ibis table (essentially DuckDB is managing the data). Then we filter and group by country in the same way.
-
-A key difference: when we define summary in Ibis, it hasn't actually run yet. In pandas, the grouping happens immediately in memory. In Ibis, summary is an expression; the actual SQL runs in DuckDB only when we request the data (e.g., converting to pandas or calling execute()). The benefit? Performance and scalability. In our tests with a large coffee dataset (~100 million rows), this Ibis + DuckDB approach was ~14x faster for the aggregation than pandas, and used about 1/4 of the memory. In fact, an official benchmark showed Ibis+DuckDB could be up to 193x faster than pandas for certain analytics workloads while using significantly less memory. The takeaway: you get the convenience of pandas-like code with the power of a database engine.
-:::
 
 ## Only Moka 
 
@@ -114,17 +107,13 @@ A key difference: when we define summary in Ibis, it hasn't actually run yet. In
 - **Maria** – Software Engineer (backend APIs in FastAPI)
 
 
-## Only Moka Challenge
+## Only Moka Challenge (no Ibis)
 
 Each handoff meant a full rewrite of logic:
 
 - Ana's pandas analysis had to be re-coded by João in SQL for Postgres
 - João’s SQL results had to be reimplemented by Maria in Python (or via an ORM) for the API
 - This duplication introduced bugs and delays, and feedback loops were slow
-
-## Only Moka Solution
-
-Adopt Ibis so all three use the same code – one lingua franca across environments and roles
 
 :::{.notes}
 Now let's move into our case study: Only Moka. It's a (fictional) direct-to-consumer coffee company – think of it as a marketplace and data hub for specialty coffee. They have a lot of data on coffees, roasters, prices, reviews, etc.
@@ -134,15 +123,44 @@ The data team at Only Moka has three key players:
 Ana, a data scientist who explores data and builds models (she's been using pandas and notebooks).
 João, a data engineer who needs to take those insights and implement them in the company’s PostgreSQL data warehouse.
 Maria, a software engineer who builds FastAPI endpoints to expose analytics and recommendations to the application.
+:::
 
-Before Ibis, this workflow was painful. Ana would do an analysis in pandas, but then João essentially had to retranslate that into SQL from scratch to run on Postgres. Every time Ana tweaked her analysis, João had to update the SQL. And when Maria needed to provide those results via an API, she might either call João's SQL or, worse, duplicate some logic in Python again. Each stage was a handoff in a different "language" – Python, then SQL, then back to Python – with lots of opportunity for inconsistencies and bugs. It also meant that if Ana found a new insight, it could take days or weeks before it was reflected in the live product.
+## Only Moka Solution (Ibis)
 
-Only Moka’s solution was to introduce Ibis as a common layer. With Ibis, Ana, João, and Maria can all work with the same exact code for data transformations. Ana writes it once in Ibis; João can use that to generate SQL or directly execute it in the database; Maria can call the same logic in the API. Let's see how that works in practice for each of them.
+Adopt Ibis so all three use the same code – one lingua franca across environments and roles
+
+:::{.notes}
+With no Ibis, this workflow was painful. Ana would do an analysis in pandas, but then João essentially had to retranslate that into SQL from scratch to run on Postgres. Every time Ana tweaked her analysis, João had to update the SQL. And when Maria needed to provide those results via an API, she might either call João's SQL or, worse, duplicate some logic in Python again. Each stage was a handoff in a different "language" – Python, then SQL, then back to Python – with lots of opportunity for inconsistencies and bugs. It also meant that if Ana found a new insight, it could take days or weeks before it was reflected in the live product.
+
+Only Moka decided to introduce Ibis as a common layer. With Ibis, Ana, João, and Maria can all work with the same exact code for data transformations. Ana writes it once in Ibis; João can use that to generate SQL or directly execute it in the database; Maria can call the same logic in the API. Let's see how that works in practice for each of them.
 :::
 
 ## {.center}
 
 <h5 class="r-fit-text">DEMO</h5>
+
+
+## Ibis vs SQL
+
+When to use SQL:
+
+- Query Optimization
+- Highly Secure and Regulated Environments
+
+When to use Ibis:
+
+- Need to switch between different data engines
+- Working with both SQL databases and DataFrame-like systems 
+
+:::{.notes}
+Before moving to the Key Takeaways I would like to address the Ibis vs SQL problem, in general 
+
+Query Optimization - You want to squeeze every ounce of performance for your query
+Highly Secure and Regulated Environments - You work in environment where the data should stay in the database
+
+Switching Between Data Engines - Write once, run anywhere across PostgreSQL, DuckDB.
+SQL Databases and DataFrame-like Systems - You need more than SQL systems.
+:::
 
 ## Key Takeaways
 
@@ -153,7 +171,7 @@ Only Moka’s solution was to introduce Ibis as a common layer. With Ibis, Ana, 
 - **Fewer bugs, easier maintenance** 
 
 :::{.notes}
-To wrap up, I want to emphasize a few key benefits we saw with Ibis at Only Moka:
+To wrap up, I want to emphasize a few key benefits of Ibis:
 
 Seamless environment management: The team could use DuckDB for fast local development and then move to PostgreSQL in staging/production without changing the code. This made it easy to test on small data and then run on the full dataset in prod. Future migrations (say, to BigQuery or Spark) are also much simpler since Ibis supports those backends too.
 
